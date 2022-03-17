@@ -1,0 +1,147 @@
+<?xml version="1.0" ?>
+<robot name="smart" xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:property name="PI" value="3.1415926835897931"/>
+
+    <!-- base  -->
+    <xacro:property name="base_length" value="1.5"/>
+    <xacro:property name="base_width" value="0.68"/>
+    <xacro:property name="base_height" value="0.6"/>
+    <xacro:property name="base_pose_z" value="0.6"/>
+
+    <!-- wheel steering-->
+    <xacro:property name="wheel_steering_radius" value="1.5"/>
+    <xacro:property name="wheel_steering_length" value="1.5"/>
+    <xacro:property name="wheel_steering_mass" value="1.5"/>
+    
+    <!-- wheel -->
+    <xacro:property name="wheel_radius" value="1.5"/>
+    <xacro:property name="wheel_length" value="1.5"/>
+    <xacro:property name="wheel_mass" value="1.5"/>
+
+    <!-- color define -->
+    <material name="yellow">
+         <color rgba="1 0.4 0 1"/>
+     </material>
+    <material name="black"> 
+        <color rgba="0 0 0 0.95"/>
+     </material>     
+    <material name="gray">
+        <color rgba="0.75 0.75 0.75 1"/>
+     </material>
+
+
+    <!-- Macro for inertia matrix -->
+    <xacro:macro name="sphere_inertial_matrix" params="m r">
+        <inertial>
+            <mass value="${m}" />
+            <inertia ixx="${2*m*r*r/5}" ixy="0" ixz="0"
+                iyy="${2*m*r*r/5}" iyz="0" 
+                izz="${2*m*r*r/5}" />
+        </inertial>
+    </xacro:macro>
+ 
+    <xacro:macro name="cylinder_inertial_matrix" params="m r h">
+        <inertial>
+            <mass value="${m}" />
+            <inertia ixx="${m*(3*r*r+h*h)/12}" ixy = "0" ixz = "0"
+                iyy="${m*(3*r*r+h*h)/12}" iyz = "0"
+                izz="${m*r*r/2}" /> 
+        </inertial>
+    </xacro:macro>
+
+    <xacro:macro name="cuboid_inertial_matrix" params="m w l h">
+        <inertial>
+            <mass value="${m}" />
+            <inertia ixx="${m*(l*l+h*h)/12}" ixy = "0" ixz = "0"
+                iyy="${m*(w*w+h*h)/12}" iyz = "0"
+                izz="${m*(w*w+l*l)/12}" /> 
+        </inertial>
+    </xacro:macro>
+
+
+    <!-- Macro for robot wheel steering-->
+    <xacro:macro name="wheel" params="prefix reflect">
+        <joint name="${prefix}_wheel_steering_joint" type="revolute">
+            <origin xyz="0 ${reflect*wheel_joint_y} ${-wheel_joint_z}" rpy="0 0 0"/>
+            <parent link="base_link"/>
+            <child link="${prefix}_wheel_link"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+ 
+        <link name="${prefix}_wheel_link">
+            <visual>
+                <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+                <geometry>
+                    <cylinder radius="${wheel_steering_radius}" length = "${wheel_steering_length}"/>
+                </geometry>
+                <material name="gray" />
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+                <geometry>
+                    <cylinder radius="${wheel_steering_radius}" length = "${wheel_steering_length}"/>
+                </geometry>
+            </collision>
+            <cylinder_inertial_matrix  m="${wheel_steering_mass}" r="${wheel_steering_radius}" h="${wheel_steering_length}" />
+        </link>
+ 
+        <gazebo reference="${prefix}_wheel_link">
+            <material>Gazebo/Gray</material>
+        </gazebo>
+ 
+        <!-- Transmission is important to link the joints and the controller -->
+        <transmission name="${prefix}_wheel_joint_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${prefix}_wheel_joint" >
+                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${prefix}_wheel_joint_motor">
+                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+            </actuator>
+        </transmission>
+    </xacro:macro>
+
+    <!-- Macro for robot wheel-->
+    <xacro:macro name="wheel" params="prefix parent reflect">
+        <joint name="${prefix}_wheel_steering_joint" type="continuous">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <parent link="${parent}_wheel_steering_link"/>
+            <child link="${prefix}_wheel_link"/>
+            <axis xyz="0 1 0"/>
+        </joint>
+ 
+        <link name="${prefix}_wheel_link">
+            <visual>
+                <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length = "${wheel_length}"/>
+                </geometry>
+                <material name="gray" />
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length = "${wheel_length}"/>
+                </geometry>
+            </collision>
+            <cylinder_inertial_matrix  m="${wheel_mass}" r="${wheel_radius}" h="${wheel_length}" />
+        </link>
+ 
+        <gazebo reference="${prefix}_wheel_link">
+            <material>Gazebo/Gray</material>
+        </gazebo>
+ 
+        <!-- Transmission is important to link the joints and the controller -->
+        <transmission name="${prefix}_wheel_joint_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${prefix}_wheel_joint" >
+                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${prefix}_wheel_joint_motor">
+                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+            </actuator>
+        </transmission>
+    </xacro:macro>
+
